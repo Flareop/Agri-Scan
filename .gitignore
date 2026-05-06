@@ -7,31 +7,45 @@ package-lock.json
 .env.local
 .env.*.local
 
-# Build and dist
+# Build outputs (regenerated on build)
 dist/
 build/
 .builds/
 
-# Logs
+# Logs and temp files
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 stderr.log
 stdout.log
+tmp/
+temp/
+*.tmp
 
 # OS files
 .DS_Store
 Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# Node running processes
+# Process managers
 .pm2/
+.forever/
+
+# Misc
+.cache/
+.turbo/
+.nuxt/
