@@ -1,0 +1,5 @@
+PassengerAppRoot /home/u468488538/domains/grey-mongoose-910760.hostingersite.com/public_html
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs22/root/bin/node
+PassengerStartupFile server.cjs
+PassengerBaseURI /
