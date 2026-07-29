@@ -36,6 +36,7 @@ ehthumbs.db
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *.sublime-project
@@ -44,6 +45,10 @@ ehthumbs.db
 # Process managers
 .pm2/
 .forever/
+
+# Netlify
+.netlify/
+deno.lock
 
 # Misc
 .cache/

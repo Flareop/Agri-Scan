@@ -1,260 +1,170 @@
-# AgriScan - AI Crop Health Analysis
+# AgriScan — AI Crop Health Analysis
 
-A full-stack web application combining plant disease detection and crop analysis powered by Google's Gemini AI.
+Upload a photo of a crop or leaf and get an instant PRASAI diagnosis: what's wrong, how to treat
+it, which products to buy in India, and videos showing the technique. Includes a farming-only chat
+assistant for follow-up questions.
 
-## Features
+Built as a static React frontend plus two Netlify serverless functions — no server to manage.
 
-- 📸 **Image Upload** - Drag-and-drop or browse to upload plant/crop images
-- 🔍 **AI Disease Detection** - Google Gemini analyzes images for diseases and health issues
-- 💊 **Treatment Recommendations** - Get specific, actionable treatment advice
-- 🛒 **Product Links** - Direct links to recommended products available in India
-- 📺 **Video Resources** - YouTube search queries for learning tutorials
-- 🚀 **Full-Stack Ready** - Frontend (React + Vite) + Backend (Express.js)
+## Tech stack
 
-## Tech Stack
+| Layer | Choice |
+| --- | --- |
+| Frontend | React 19, React Router 7, Vite 8 |
+| Icons / type | lucide-react, Plus Jakarta Sans (self-hosted) |
+| Backend | Netlify Functions (v2) |
+| AI | PRASAI — runs on Google Gemini (`@google/generative-ai`) |
+| Hosting | Netlify (static + functions) |
 
-**Frontend:**
-- React 19
-- React Router 7
-- Vite (build tool)
-- CSS3 with responsive design
-
-**Backend:**
-- Node.js
-- Express.js
-- Google Generative AI (Gemini)
-- Multer (file uploads)
-- CORS enabled
-
-## Project Structure
+## Project structure
 
 ```
-public_html/
-├── src/                          # React source code
-│   ├── components/               # Reusable components
-│   │   ├── ImageUpload.jsx      # File upload component
-│   │   └── ResultsDisplay.jsx   # Results display component
-│   ├── pages/                    # Page components
-│   │   ├── HomePage.jsx         # Main upload page
-│   │   └── AnalysisPage.jsx     # Results page
-│   ├── styles/                   # CSS files
-│   │   ├── home.css
-│   │   ├── analysis.css
-│   │   ├── imageUpload.css
-│   │   ├── results.css
-│   │   └── app.css
-│   ├── App.jsx                   # App router
-│   ├── main.jsx                  # React entry point
-│   └── index.css                 # Global styles
-├── public/                       # Static assets
-│   └── vite.svg
-├── dist/                         # Build output (generated)
-├── data/                         # Application data
-├── server.cjs                    # Express backend server
-├── db.cjs                        # Database configuration
-├── vite.config.js                # Vite configuration
-├── package.json                  # Dependencies and scripts
-├── .env.example                  # Environment template
-└── README.md                     # This file
+├── index.html                 # Vite entry point
+├── netlify.toml               # Build, functions, and redirect config
+├── netlify/functions/
+│   ├── predict.js             # POST /api/predict — image → diagnosis
+│   └── chat.js                # POST /api/chat   — farming Q&A
+├── public/favicon.svg
+└── src/
+    ├── components/            # Navbar, ImageUpload, ResultsDisplay,
+    │                          # ChatWidget, RecentScans, ConfidenceGauge, Toast
+    ├── context/ThemeContext.jsx
+    ├── pages/                 # HomePage, AnalysisPage
+    ├── styles/                # One stylesheet per component
+    ├── utils/                 # image.js (client resize), history.js (localStorage)
+    ├── App.jsx
+    ├── main.jsx
+    └── index.css              # Design tokens (light + dark), base styles
 ```
 
-## Setup & Installation
+## Local development
 
-### Prerequisites
-- Node.js 16+
-- npm or yarn
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/Flareop/Agri-Scan.git
-cd Agri-Scan/public_html
-```
-
-### 2. Install Dependencies
+Requires Node 20+.
 
 ```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
-
-Copy `.env.example` to `.env`:
+Create a `.env` file from the template and add your key:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your configuration:
-
 ```env
-PORT=8000
 GEMINI_API_KEY=your_google_generative_ai_api_key
-VITE_API_BASE_URL=http://localhost:8000
 ```
 
-**Getting a Gemini API Key:**
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Click "Get API Key"
-3. Create a new API key
-4. Copy and paste it into your `.env` file
+Get a key from [Google AI Studio](https://aistudio.google.com/app/apikey).
 
-### 4. Development
+Then start everything (Vite + functions together, via the Netlify CLI):
 
-**Start both frontend and backend:**
-
-```bash
-npm run dev         # Frontend runs on http://localhost:5173
-npm run dev:server  # Backend runs on http://localhost:8000
-```
-
-Or use concurrently:
-
-```bash
-npm run full-dev    # Both services in parallel
-```
-
-**Frontend only:**
 ```bash
 npm run dev
 ```
 
-**Backend only:**
-```bash
-npm run start
-```
+Open http://localhost:8888.
 
-### 5. Production Build
+> Without a `GEMINI_API_KEY` the app still runs end-to-end — the functions return
+> demo responses so you can click through the whole flow.
 
-Build the React frontend:
+### Other scripts
 
 ```bash
-npm run build
+npm run build      # production build → dist/
+npm run preview    # preview the built frontend (no functions)
+npm run dev:vite   # frontend only, no functions
 ```
 
-This generates optimized files in the `dist/` folder that the Express server serves.
+## Deploying to Netlify
 
-Run production:
+### 1. Push to GitHub
 
 ```bash
-npm start
+git add -A && git commit -m "Modern rebuild" && git push
 ```
 
-Access the app at `http://localhost:8000`
+### 2. Create the site
 
-## API Endpoints
+In Netlify: **Add new site → Import an existing project**, pick the repo. `netlify.toml`
+already sets the build command (`npm run build`), publish directory (`dist`), and functions
+directory, so the defaults will be correct.
 
-### Health Check
+### 3. Add the API key
+
+**Site configuration → Environment variables → Add a variable:**
+
+| Key | Value |
+| --- | --- |
+| `GEMINI_API_KEY` | your key |
+
+This is read only inside the serverless functions. It is deliberately **not** prefixed with
+`VITE_`, which would bake it into the public JavaScript bundle.
+
+### 4. Deploy
+
+Trigger a deploy. Subsequent pushes deploy automatically.
+
+To deploy from your machine instead:
+
+```bash
+npx netlify deploy --prod
 ```
-GET /health
-```
-Returns server status.
 
-### Prediction/Analysis
-```
-POST /predict
-Content-Type: multipart/form-data
+## How it works
 
-File: image (JPG, PNG, WebP)
+1. The browser downscales the chosen photo to max 1280px and encodes it as JPEG base64.
+   This keeps requests under [Netlify's 6MB function payload limit](https://docs.netlify.com/build/functions/overview/)
+   and makes uploads faster on mobile connections.
+2. `POST /api/predict` sends the image to PRASAI with an agronomy prompt and returns strict JSON.
+3. Results render on `/analysis`; the scan is also saved to `localStorage` as a "Recent scan".
+4. `POST /api/chat` powers the assistant widget, which resends the running transcript so the
+   conversation keeps context across turns.
+
+## API
+
+### `POST /api/predict`
+
+```json
+{ "image": "<base64>", "mimeType": "image/jpeg" }
 ```
 
-Returns analysis results:
 ```json
 {
   "is_plant": true,
-  "disease": "Early Blight",
-  "confidence": 0.95,
-  "treatment": "Apply fungicide...",
-  "recommended_products": [
-    {
-      "name": "Product Name",
-      "link": "https://www.google.com/search?tbm=shop&q=Product+Name"
-    }
-  ],
-  "video_queries": [
-    "how to treat early blight tomato"
-  ]
+  "disease": "Wheat Leaf Rust",
+  "confidence": 0.92,
+  "treatment": "Apply a triazole fungicide…",
+  "recommended_products": [{ "name": "…", "link": "…" }],
+  "video_queries": ["…"]
 }
 ```
 
-## Development Workflow
+Non-plant images return `{ "is_plant": false, "error": "…" }`.
 
-### Making Frontend Changes
+### `POST /api/chat`
 
-1. Edit files in `src/` directory
-2. Vite auto-refreshes on save
-3. Check browser at `http://localhost:5173`
-
-### Building for Deployment
-
-```bash
-npm run build
-npm start
+```json
+{ "message": "How do I treat leaf rust?", "history": [{ "role": "user", "text": "…" }] }
 ```
 
-The server automatically serves the optimized `dist/` folder.
-
-## Deployment
-
-### Hostinger/Traditional Hosting
-
-1. Build the frontend:
-   ```bash
-   npm run build
-   ```
-
-2. Upload to server:
-   - `dist/` folder content to public_html
-   - `server.cjs`, `db.cjs`, `package.json`, `data/` folder
-   - `.env` (with proper credentials)
-
-3. Install and run:
-   ```bash
-   npm install
-   npm start
-   ```
-
-### Docker
-
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-
-RUN npm run build
-
-EXPOSE 8000
-
-CMD ["npm", "start"]
+```json
+{ "reply": "…" }
 ```
 
-## Troubleshooting
+## Privacy
 
-**"GEMINI_API_KEY not found"**
-- Make sure `.env` file exists in `public_html/` root
-- Verify your API key is correct
+There are no accounts and no database. Photos are sent to PRASAI for analysis and are not
+stored by this app. "Recent scans" are kept only in your own browser's `localStorage` and can
+be cleared from the home page.
 
-**"Port 8000 already in use"**
-- Change PORT in `.env`
-- Or kill the process: `lsof -ti:8000 | xargs kill`
+## Notes
 
-**Build errors**
-- Delete `node_modules/` and `package-lock.json`
-- Run `npm install` again
-
-## Contributing
-
-Feel free to fork, modify, and submit pull requests!
+- AI guidance can be wrong. Confirm serious outbreaks with a local agricultural officer.
+- `npm audit` flags `react-router` for an RSC-mode CSRF issue. This app is a static SPA with
+  no RSC or server actions, so it is not affected; older "fixed" versions carry far more
+  serious open-redirect/XSS issues that *would* apply here.
 
 ## License
 
-MIT License - See LICENSE file for details
-
-## Support
-
-For issues or questions, open an issue on [GitHub](https://github.com/Flareop/Agri-Scan/issues)
+MIT

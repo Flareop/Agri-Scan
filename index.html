@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgriScan — AI Crop Health Analysis</title>
+    <meta
+      name="description"
+      content="Upload a photo of your crop or plant leaf and get instant AI-powered disease detection, treatment plans, and product recommendations."
+    />
+    <meta name="theme-color" content="#0A4A34" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F6F8F4" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('agriscan-theme')
+          var theme =
+            stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          document.documentElement.setAttribute('data-theme', theme)
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

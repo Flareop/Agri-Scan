@@ -1,3 +1,19 @@
 .app {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+}
+
+.app > main {
+  flex: 1;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
