@@ -14,9 +14,18 @@
     <script>
       (function () {
         try {
+          // ?theme= from a host page wins, and has to be resolved here rather
+          // than in React — by the time the app mounts the wrong theme has
+          // already painted, which inside an iframe is a visible flash of a
+          // bright panel in someone else's dark page.
+          var param = new URLSearchParams(window.location.search).get('theme')
+          if (param !== 'dark' && param !== 'light') param = null
+
           var stored = localStorage.getItem('agriscan-theme')
           var theme =
-            stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            param ||
+            stored ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
           document.documentElement.setAttribute('data-theme', theme)
         } catch (e) {}
       })()

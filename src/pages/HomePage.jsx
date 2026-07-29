@@ -16,6 +16,7 @@ import ImageUpload from '../components/ImageUpload'
 import RecentScans from '../components/RecentScans'
 import { resizeImage } from '../utils/image'
 import { clearScans, loadScans, makeThumbnail, saveScan } from '../utils/history'
+import { isEmbed } from '../utils/embed'
 import '../styles/home.css'
 
 const STEPS = [
@@ -100,6 +101,26 @@ function HomePage() {
   }
 
   const handleClear = () => setScans(clearScans())
+
+  /* Embed mode is the uploader and nothing else.
+
+     Everything below — hero, how-it-works, features, CTA band, footer — is
+     marketing for AgriScan, and inside a host page it is marketing competing
+     with that page's own. The host has already made the pitch and put its own
+     headline directly above this frame; repeating it in a smaller typeface a
+     few hundred pixels down makes the section read as an advertisement rather
+     than as proof. What is left is the one thing the host promised: a box you
+     drop a leaf photo into.
+
+     Recent scans are dropped too — they are a returning-visitor feature, and
+     an embed is almost always someone's first contact with the tool. */
+  if (isEmbed) {
+    return (
+      <div className="home home-embed">
+        <ImageUpload onAnalyze={handleAnalyze} loading={loading} error={error} />
+      </div>
+    )
+  }
 
   return (
     <div className="home">
