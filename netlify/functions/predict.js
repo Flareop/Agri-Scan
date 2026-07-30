@@ -2,19 +2,19 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // stay comfortably under Netlify's 6MB payload cap
 
-const FALLBACK_RESULT = {
-  is_plant: true,
-  disease: 'Wheat Rust (Simulated)',
-  confidence: 0.95,
-  treatment:
-    'Note: Real AI failed (Model not found). Showing simulation. \n\nTreatment: Apply fungicide immediately and monitor soil moisture. Ensure good air circulation.',
-  recommended_products: [
-    { name: 'Bayer Folicur Fungicide', link: 'https://www.google.com/search?tbm=shop&q=Bayer+Folicur+Fungicide' },
-    { name: 'Syngenta Amistar', link: 'https://www.google.com/search?tbm=shop&q=Syngenta+Amistar' },
-  ],
-  video_queries: ['wheat rust treatment video', 'how to control wheat rust organic'],
-  fallback: true,
-}
+/* There is deliberately no simulated result in here.
+
+   This previously returned a hardcoded "Wheat Rust" diagnosis at 0.95
+   confidence, with real fungicide names and shopping links, whenever the
+   model call threw. The only marker was the word "(Simulated)" inside the
+   disease name and a note partway through the treatment text.
+
+   That is the most damaging thing this endpoint could do. Someone photographs
+   a sick plant, is told with 95% confidence what is wrong with it, and is sent
+   to buy a specific chemical — none of which came from looking at their photo.
+   A visible failure costs us a visitor; an invented diagnosis costs them a
+   crop. Fail loudly instead: the client already renders `error` from a non-2xx
+   response, so an honest error surfaces in the UI on its own. */
 
 const DEMO_RESULT = {
   disease: 'Demo Mode (Add API Key)',
@@ -97,7 +97,11 @@ export default async (req) => {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
+    /* gemini-3-flash-preview was not a servable id — every call threw and the
+       old fallback swallowed it, which is why production quietly returned a
+       simulated diagnosis instead of an error. Current stable vision models
+       are gemini-3.6-flash / gemini-3.5-flash / gemini-2.5-flash. */
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' })
 
     const imagePart = {
       inlineData: {
@@ -116,7 +120,17 @@ export default async (req) => {
     console.log('PRASAI Analysis:', data)
     return json(data)
   } catch (error) {
-    console.error('PRASAI Error (Auto-Fallback):', error.message)
-    return json(FALLBACK_RESULT)
+    /* Logged in full for us, summarised for the visitor. The model's own error
+       text can name internal ids and quota details, so it does not go to the
+       client — but "something went wrong" with no signal is why the previous
+       failure went unnoticed in production for so long, so the reason is
+       coarsely classified here. */
+    console.error('PRASAI predict failed:', error?.message, error)
+
+    const message = /JSON|Unexpected token/i.test(error?.message || '')
+      ? 'The analysis came back in a form we could not read. Please try that photo again.'
+      : 'The analysis service is unavailable right now. Please try again in a moment.'
+
+    return json({ error: message }, 502)
   }
 }
