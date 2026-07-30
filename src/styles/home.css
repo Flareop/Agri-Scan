@@ -4,14 +4,6 @@
   min-height: 100vh;
 }
 
-/* See .app[data-embed] in app.css — the frame is sized by its content. The
-   padding is the frame's only breathing room now that the hero is gone, and
-   it is what keeps the dropzone from touching the host's panel edge. */
-.home-embed {
-  min-height: 0;
-  padding: clamp(1rem, 4vw, 1.75rem);
-}
-
 /* Hero */
 
 .hero {

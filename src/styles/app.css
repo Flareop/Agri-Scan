@@ -8,24 +8,6 @@
   flex: 1;
 }
 
-/* Embed mode sizes to its content, not to the viewport.
-
-   min-height: 100vh is right for a standalone page and actively wrong in a
-   frame: the frame reports its own height to the host so the host can size
-   the iframe to fit, and a 100vh floor makes that measurement the viewport
-   height forever, no matter how little is in it. */
-.app[data-embed] {
-  min-height: 0;
-}
-
-/* A standalone page wants smooth scrolling; a frame resized to fit its
-   content has nothing to scroll, and the animation only shows up as the
-   content sliding when a result arrives. The attribute is set on <html> at
-   module load by utils/embed.js. */
-html[data-embed] {
-  scroll-behavior: auto;
-}
-
 html {
   scroll-behavior: smooth;
 }
