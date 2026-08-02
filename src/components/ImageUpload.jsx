@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ImagePlus, Loader2, RefreshCw, ScanLine, X } from 'lucide-react'
+import { SAMPLES } from '../utils/samples'
 import '../styles/imageUpload.css'
 
 const WAIT_MESSAGES = [
@@ -14,6 +15,7 @@ function ImageUpload({ onAnalyze, loading, error }) {
   const [preview, setPreview] = useState(null)
   const [dragActive, setDragActive] = useState(false)
   const [waitIndex, setWaitIndex] = useState(0)
+  const [sampleLoading, setSampleLoading] = useState(null)
   const inputRef = useRef(null)
 
   // Rotate the wait copy so a slow model call doesn't feel frozen.
@@ -65,6 +67,29 @@ function ImageUpload({ onAnalyze, loading, error }) {
     setFile(null)
     setPreview(null)
     if (inputRef.current) inputRef.current.value = ''
+  }
+
+  /* A sample lands in the same place a dropped file does, rather than
+     analysing straight away. The visitor still sees the photo, still presses
+     Analyze, and still gets the wait copy — so what they are shown is the real
+     product, not a shortcut through it. It also means a mistaken tap is one
+     click to undo instead of a wasted model call. */
+  const useSample = async (sample) => {
+    if (loading || sampleLoading) return
+    setSampleLoading(sample.src)
+    try {
+      const response = await fetch(sample.src)
+      if (!response.ok) throw new Error(`${response.status}`)
+      const blob = await response.blob()
+      if (!blob.type.startsWith('image/')) throw new Error('not an image')
+      acceptFile(new File([blob], sample.src.split('/').pop(), { type: blob.type }))
+    } catch {
+      /* A missing sample file is our fault, not the visitor's, so the message
+         does not ask them to fix anything. */
+      onAnalyze(null, 'That sample could not be loaded. Try uploading a photo instead.')
+    } finally {
+      setSampleLoading(null)
+    }
   }
 
   return (
@@ -128,6 +153,40 @@ function ImageUpload({ onAnalyze, loading, error }) {
           <p className="dropzone-title">Drop a crop photo here</p>
           <p className="dropzone-hint">or click to browse — JPG, PNG or WebP</p>
           <span className="dropzone-badge">Never stored on our servers</span>
+        </div>
+      )}
+
+      {/* Only while nothing is chosen — once there is a photo in the frame the
+          row is noise competing with the Analyze button. Renders nothing at
+          all until samples exist, so this ships before the photographs do. */}
+      {SAMPLES.length > 0 && !preview && (
+        <div className="uploader-samples">
+          <p className="samples-label" id="samples-label">
+            No photo to hand? Try one of these
+          </p>
+          <ul className="samples-row" aria-labelledby="samples-label">
+            {SAMPLES.map((sample) => (
+              <li key={sample.src}>
+                <button
+                  type="button"
+                  className="sample"
+                  onClick={() => useSample(sample)}
+                  disabled={loading || Boolean(sampleLoading)}
+                >
+                  <img src={sample.src} alt="" loading="lazy" />
+                  <span className="sample-text">
+                    <span className="sample-label">{sample.label}</span>
+                    {sample.note && <span className="sample-note">{sample.note}</span>}
+                  </span>
+                  {sampleLoading === sample.src && (
+                    <span className="sample-spinner">
+                      <Loader2 size={14} className="spin" />
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
